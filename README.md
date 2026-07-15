@@ -1,3 +1,14 @@
+---
+title: CV Formatter
+emoji: 📄
+colorFrom: indigo
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+short_description: Reformate un CV sur des modèles de marque (PDF + Word)
+---
+
 # CV Formatter — SaaS
 
 Reformate un CV candidat sur les **modèles de marque** (Libens Consulting, Compleo Technologies)

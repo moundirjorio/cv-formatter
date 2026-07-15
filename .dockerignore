@@ -1,0 +1,10 @@
+.git
+.venv
+__pycache__
+**/__pycache__
+*.pyc
+.env
+storage/outputs/*
+storage/uploads/*
+storage/users.json
+render.yaml
