@@ -1,14 +1,18 @@
 # Blueprint de déploiement Render — https://render.com
-# Déploie l'app FastAPI avec HTTPS automatique et un disque persistant.
+# VERSION GRATUITE (pour tester). Pas de disque persistant : les comptes créés
+# et les CV générés sont effacés à chaque redéploiement, et le site s'endort
+# après ~15 min d'inactivité (il se réveille en ~30 s à la visite suivante).
 #
-# Les valeurs marquées « sync: false » sont des SECRETS : tu les saisis dans le
-# tableau de bord Render (jamais dans le code). SESSION_SECRET est généré
-# automatiquement par Render.
+# Pour passer en production (données conservées) : plan "starter" + bloc "disk"
+# + variable DATA_DIR=/var/data. Demande-moi, je réactive tout ça.
+#
+# Les valeurs « sync: false » sont des SECRETS : tu les saisis dans le tableau
+# de bord Render. SESSION_SECRET est généré automatiquement par Render.
 services:
   - type: web
     name: cv-formatter
     runtime: python
-    plan: starter            # requis pour le disque persistant (~7 $/mois)
+    plan: free
     region: frankfurt        # proche de la France
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
@@ -19,8 +23,6 @@ services:
         value: "3.12.7"
       - key: APP_ENV
         value: production     # active les cookies Secure (HTTPS)
-      - key: DATA_DIR
-        value: /var/data      # dossier persistant (comptes + CV générés)
       - key: SESSION_SECRET
         generateValue: true   # Render génère un secret aléatoire fort
       - key: SESSION_HOURS
@@ -35,7 +37,3 @@ services:
         sync: false           # ← mot de passe admin (PAS "changeme")
       - key: CLAUDE_MODEL
         value: claude-opus-4-8
-    disk:
-      name: cv-data
-      mountPath: /var/data    # doit correspondre à DATA_DIR
-      sizeGB: 1
