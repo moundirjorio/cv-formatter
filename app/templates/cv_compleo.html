@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  /* Frame statique : le bandeau (logo + commercial) se répète sur chaque page. */
+  @page {
+    size: a4 portrait;
+    margin: 2.4cm 1.6cm 1.4cm 1.6cm;
+    @frame header_frame {
+      -pdf-frame-content: header_content;
+      left: 1.6cm; top: 0.6cm; width: 17.8cm; height: 1.5cm;
+    }
+  }
+  body { font-family: Helvetica, Arial, sans-serif; color: {{ blue }}; font-size: 9.5pt; line-height: 1.35; }
+
+  .head { width: 100%; }
+  .head td { vertical-align: top; }
+  .logo { height: 40pt; }
+  .contact { text-align: right; color: #555555; font-size: 8.5pt; }
+  .contact .name { color: #333333; font-weight: bold; }
+
+  .title-block { text-align: center; margin: 4pt 0 10pt 0; }
+  .initials { color: {{ blue }}; font-weight: bold; font-size: 13pt; margin: 0; text-align: center; }
+  .job-title { color: {{ blue }}; font-weight: bold; font-size: 11pt; margin: 2pt 0 0 0; text-align: center; }
+
+  h2.section { color: {{ orange }}; font-size: 11pt; font-weight: bold;
+               text-decoration: underline; margin: 12pt 0 5pt 0; }
+  p { margin: 0 0 5pt 0; text-align: justify; }
+
+  .skill-cat { font-weight: bold; margin: 5pt 0 1pt 0; }
+  ul { margin: 0 0 4pt 0; padding-left: 14pt; }
+  li { margin: 0 0 1pt 0; }
+
+  .exp { margin-top: 9pt; }
+  .exp .headrow { width: 100%; }
+  .exp .company { font-weight: bold; font-size: 10pt; }
+  .exp .period { text-align: right; font-weight: bold; }
+  .exp .role { font-weight: bold; margin: 1pt 0 2pt 0; }
+  .lbl { font-weight: bold; margin: 4pt 0 1pt 0; }
+  .tech { margin-top: 2pt; }
+</style>
+</head>
+<body>
+
+<div id="header_content">
+  <table class="head">
+    <tr>
+      <td width="50%">{% if logo_data_uri %}<img src="{{ logo_data_uri }}" class="logo" />{% endif %}</td>
+      <td width="50%" class="contact">
+        {% if cv.commercial_name %}<span class="name">{{ cv.commercial_name }}</span><br/>{% endif %}
+        {% if cv.commercial_email %}{{ cv.commercial_email }}<br/>{% endif %}
+        {% if cv.commercial_phone %}{{ cv.commercial_phone }}{% endif %}
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="title-block">
+  {% if cv.full_name %}<p class="initials">{{ cv.full_name }}</p>{% elif cv.initials %}<p class="initials">{{ cv.initials }}</p>{% endif %}
+  <p class="job-title">{{ cv.title }}</p>
+</div>
+
+{% if cv.summary %}
+<h2 class="section">{{ L.summary }}</h2>
+{% for para in cv.summary.split('\n') if para.strip() %}
+<p>{{ para.strip() }}</p>
+{% endfor %}
+{% endif %}
+
+{% if cv.experience_highlights %}
+<h2 class="section">{{ L.highlights }}</h2>
+<ul>{% for h in cv.experience_highlights %}<li>{{ h }}</li>{% endfor %}</ul>
+{% endif %}
+
+{% if cv.skill_groups %}
+<h2 class="section">{{ L.skills }}</h2>
+{% for g in cv.skill_groups %}
+<p class="skill-cat">{{ g.category }}</p>
+<ul>{% for s in g.items %}<li>{{ s }}</li>{% endfor %}</ul>
+{% endfor %}
+{% endif %}
+
+{% if cv.education %}
+<h2 class="section">{{ L.education }}</h2>
+<ul>
+{% for e in cv.education %}
+<li><strong>{{ e.degree }}</strong>{% if e.school %} — {{ e.school }}{% endif %}{% if e.period %} — {{ e.period }}{% endif %}</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% if cv.certifications %}
+<h2 class="section">{{ L.certs }}</h2>
+<ul>{% for c in cv.certifications %}<li>{{ c }}</li>{% endfor %}</ul>
+{% endif %}
+
+{% if cv.languages %}
+<h2 class="section">{{ L.langs }}</h2>
+<ul>{% for l in cv.languages %}<li>{{ l }}</li>{% endfor %}</ul>
+{% endif %}
+
+{% if cv.experiences %}
+<h2 class="section">{{ L.experience }}</h2>
+{% for x in cv.experiences %}
+<div class="exp">
+  <table class="headrow"><tr>
+    <td class="company">{{ x.company }}{% if x.location %} – {{ x.location }}{% endif %}</td>
+    <td class="period">{{ x.period or '' }}</td>
+  </tr></table>
+  {% if x.role %}<p class="role">{{ x.role }}</p>{% endif %}
+  {% if x.context %}<p class="lbl">{{ L.context }} :</p><p>{{ x.context }}</p>{% endif %}
+  {% if x.responsibilities %}
+  <p class="lbl">{{ L.responsibilities }} :</p>
+  <ul>{% for r in x.responsibilities %}<li>{{ r }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if x.tech_environment %}
+  <p class="lbl">{{ L.tech }} :</p>
+  <p class="tech">{{ x.tech_environment }}</p>
+  {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+</body>
+</html>

@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f6f8">
+<title>CV Formatter — Studio</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<script>
+  (()=>{let savedTheme=null;try{savedTheme=localStorage.getItem('cvf-theme');}catch(_){}
+    document.documentElement.dataset.theme=savedTheme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');})();
+</script>
+<link rel="preload" href="/static/fonts/40fe3cf7.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/fonts/fonts.css">
+<style>
+  :root{
+    color-scheme:light;
+    --bg:#f5f6f8;--surface:#ffffff;--surface-soft:#f8f9fb;--ink:#111827;
+    --muted:#596273;--faint:#667085;--line:#e4e7ec;--line-strong:#9da6b5;
+    --accent:#5b5cf0;--accent-hover:#4949da;--accent-soft:#f0efff;--accent-line:#d9d7ff;
+    --ok:#15803d;--ok-soft:#ecfdf3;--err:#d92d20;--err-soft:#fff1f0;
+    --orange:#e8792b;--blue:#2e75b6;--shadow:0 16px 50px rgba(35,43,74,.08);
+    --sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --display:'Manrope',var(--sans);--radius:20px;
+  }
+  :root[data-theme="dark"]{
+    color-scheme:dark;--bg:#0d1017;--surface:#151923;--surface-soft:#1a1f2b;--ink:#f3f5f8;
+    --muted:#b3bbc8;--faint:#9ca6b7;--line:#2a303b;--line-strong:#657184;
+    --accent:#8b8cff;--accent-hover:#a4a5ff;--accent-soft:#222343;--accent-line:#3c3d70;
+    --ok:#47cf73;--ok-soft:#14271c;--err:#ff7168;--err-soft:#321a1c;
+    --shadow:0 18px 60px rgba(0,0,0,.28);
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html{scroll-behavior:smooth}
+  body{margin:0;min-height:100vh;font-family:var(--sans);color:var(--ink);background:var(--bg);
+    background-image:radial-gradient(circle at 50% -120px,rgba(91,92,240,.10),transparent 470px);
+    -webkit-font-smoothing:antialiased;transition:background .2s,color .2s}
+  button,input,textarea{font:inherit}
+  button,a,input,textarea,summary{-webkit-tap-highlight-color:transparent}
+  ::selection{background:var(--accent-line)}
+  a{color:inherit;text-decoration:none}
+  :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @keyframes riseIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes toastIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+
+  header.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 82%,transparent);
+    border-bottom:1px solid color-mix(in srgb,var(--line) 82%,transparent);backdrop-filter:blur(18px)}
+  .top .in{max-width:1160px;height:68px;margin:0 auto;padding:0 28px;display:flex;align-items:center;gap:12px}
+  .brand{display:flex;align-items:center;gap:11px;min-width:max-content}
+  .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,#6f70ff,#4647d7);
+    display:grid;place-items:center;color:#fff;
+    box-shadow:0 8px 24px rgba(91,92,240,.24)}
+  .logo svg{width:20px;height:20px}
+  .brand .nm{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:-.02em;line-height:1.15}
+  .brand .sub{font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--faint);margin-top:2px;text-transform:uppercase}
+  .top .spacer{flex:1}
+  .product-state{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;font-weight:600;margin-right:4px}
+  .product-state::before{content:"";width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.10)}
+  .pill{height:36px;display:inline-flex;align-items:center;gap:7px;color:var(--muted);border:1px solid var(--line);
+    background:var(--surface);border-radius:10px;padding:0 12px;font-size:12px;font-weight:600;transition:.15s}
+  .pill:hover{border-color:var(--line-strong);color:var(--ink);background:var(--surface-soft)}
+  .account-menu{position:relative}
+  .account-menu>summary{height:36px;max-width:180px;display:flex;align-items:center;gap:8px;list-style:none;cursor:pointer;
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 10px;color:var(--muted);
+    font-size:12px;font-weight:600;transition:.15s}
+  .account-menu>summary::-webkit-details-marker{display:none}
+  .account-menu>summary:hover,.account-menu[open]>summary{color:var(--ink);border-color:var(--line-strong);background:var(--surface-soft)}
+  .account-menu>summary svg{width:15px;height:15px;flex:none}.account-menu>summary .chevron{width:13px;transition:transform .18s}
+  .account-menu[open]>summary .chevron{transform:rotate(180deg)}
+  .account-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+  .account-popover{position:absolute;top:44px;right:0;width:238px;padding:8px;background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;box-shadow:0 18px 50px rgba(20,27,48,.16);animation:riseIn .16s ease both}
+  .account-meta{display:flex;align-items:center;gap:10px;padding:9px 9px 11px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .account-avatar{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:var(--accent-soft);
+    color:var(--accent);font-family:var(--display);font-size:13px;font-weight:700;flex:none}
+  .account-copy{min-width:0}.account-copy small{display:block;color:var(--faint);font-size:10px;margin-bottom:2px}
+  .account-copy strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+  .account-action{height:38px;display:flex;align-items:center;gap:9px;border-radius:9px;padding:0 10px;color:var(--muted);font-size:12px;font-weight:600}
+  .account-action:hover{background:var(--surface-soft);color:var(--err)}.account-action svg{width:15px;height:15px;flex:none}
+  .theme-toggle{width:36px;height:36px;border:1px solid var(--line);border-radius:10px;background:var(--surface);
+    color:var(--muted);display:grid;place-items:center;cursor:pointer;transition:.15s}
+  .theme-toggle:hover{color:var(--ink);border-color:var(--line-strong);background:var(--surface-soft)}
+  .theme-toggle svg{width:17px;height:17px}.theme-toggle .moon{display:none}
+  :root[data-theme="dark"] .theme-toggle .sun{display:none}:root[data-theme="dark"] .theme-toggle .moon{display:block}
+
+  main{max-width:1160px;margin:0 auto;padding:34px 28px 64px}
+  .stepper{display:flex;align-items:flex-start;margin:0 auto 40px;max-width:700px}
+  .step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative}
+  .step .line{position:absolute;z-index:0;top:15px;left:calc(-50% + 23px);right:calc(50% + 23px);height:1px;background:var(--line-strong)}
+  .step:first-child .line{display:none}
+  .step.on .line,.step.done .line{background:var(--accent)}
+  .step .dot{position:relative;z-index:1;width:31px;height:31px;border-radius:50%;border:1px solid var(--line-strong);
+    background:var(--surface);color:var(--faint);font-weight:700;font-size:12px;cursor:pointer;transition:.18s}
+  .step .dot:disabled{cursor:not-allowed;opacity:.72}
+  .step.done .dot{font-size:0;background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+  .step.done .dot::after{content:"✓";font-size:12px}
+  .step.on .dot{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 12%,transparent)}
+  .step .lbl{margin-top:8px;font-weight:600;font-size:12px;color:var(--faint);text-align:center}
+  .step.on .lbl{color:var(--ink)}.step.done .lbl{color:var(--muted)}
+
+  .pane{animation:riseIn .28s ease both}
+  .pane-head{text-align:center;margin-bottom:28px}
+  .pane-head.left{text-align:left}.pane-head.left .lead{margin-left:0}
+  .kicker{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+  h1{font-family:var(--display);font-weight:700;letter-spacing:-.035em;margin:0;line-height:1.12}
+  .lead{max-width:600px;margin:12px auto 0;color:var(--muted);font-size:15px;line-height:1.6}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow)}
+  .center{max-width:660px;margin:0 auto}.narrow{max-width:790px;margin:0 auto}
+
+  .drop{display:block;cursor:pointer;border:1.5px dashed var(--line-strong);border-radius:16px;padding:40px 28px;
+    margin:0;text-align:center;background:var(--surface-soft);color:var(--ink);letter-spacing:normal;transition:.18s}
+  .drop:hover,.drop.drag{border-color:var(--accent);background:var(--accent-soft);transform:translateY(-1px)}
+  .drop .ic{width:52px;height:52px;border-radius:15px;background:var(--accent-soft);color:var(--accent);display:grid;
+    place-items:center;margin:0 auto 15px;border:1px solid var(--accent-line)}
+  .drop .ic svg{width:24px;height:24px}
+  .drop b{font-family:var(--display);font-weight:700;font-size:17px;display:block}
+  .drop small{color:var(--muted);font-size:13px;margin-top:6px;display:block}
+  .filechip{display:none;margin-top:12px;align-items:center;gap:10px;background:var(--accent-soft);border:1px solid var(--accent-line);
+    border-radius:12px;padding:11px 13px;color:var(--accent)}
+  .filechip.show{display:flex}.filechip svg{width:16px;height:16px;flex:none}
+  .filechip .nm{color:var(--ink);font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .filechip .tag{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:46px;border:1px solid transparent;
+    border-radius:12px;background:var(--accent);color:#fff;font-weight:700;font-size:14px;cursor:pointer;padding:0 18px;
+    box-shadow:0 10px 24px -14px var(--accent);transition:transform .15s,background .15s,border-color .15s}
+  .btn:hover{background:var(--accent-hover);transform:translateY(-1px)}.btn:active{transform:none}
+  .btn:disabled{opacity:.58;cursor:wait;transform:none}.btn.dark{background:var(--accent);color:#fff;box-shadow:0 10px 24px -14px var(--accent)}
+  .btn.dark:hover{background:var(--accent-hover)}.btn.ghost{background:var(--surface);color:var(--ink);border-color:var(--line-strong);box-shadow:none}
+  .btn.ghost:hover{background:var(--surface-soft);border-color:var(--faint)}.btn.block{width:100%;min-height:50px;font-size:14px}
+  .row{display:flex;gap:10px}.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;
+    border-radius:50%;animation:sp .7s linear infinite;display:none;flex:none}.btn.loading .spin{display:inline-block}
+  .status{font-size:13px;margin-top:11px;color:var(--muted);min-height:18px}.status.ok{color:var(--ok)}
+  .status.err{color:var(--err)}.status.busy{color:var(--accent)}
+
+  label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.035em;margin:0 0 7px}
+  input[type=text],input[type=email],input[type=tel],textarea{width:100%;padding:11px 13px;border:1px solid var(--line-strong);border-radius:11px;
+    font-size:14px;background:var(--surface);color:var(--ink);outline:none;transition:.15s}
+  input::placeholder,textarea::placeholder{color:var(--faint)}
+  input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 13%,transparent)}
+  textarea{min-height:86px;resize:vertical;line-height:1.55}.grid-id{display:grid;grid-template-columns:120px 1fr;gap:14px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mt{margin-top:15px}
+
+  details.sec{border-top:1px solid var(--line)}details.sec:first-of-type{margin-top:22px}
+  details.sec>summary{list-style:none;cursor:pointer;padding:17px 2px;display:flex;align-items:center;justify-content:space-between;
+    gap:10px;font-family:var(--display);font-weight:700;font-size:14px}
+  details.sec>summary::-webkit-details-marker{display:none}.caret{width:18px;height:18px;display:grid;place-items:center;
+    border-radius:6px;background:var(--surface-soft);color:var(--muted);font-size:11px;transition:transform .2s}
+  details.sec[open]>summary .caret{transform:rotate(90deg);color:var(--accent);background:var(--accent-soft)}
+  details.sec>summary .l{display:flex;align-items:center;gap:9px}.cnt{font-size:11px;color:var(--muted);background:var(--surface-soft);
+    border:1px solid var(--line);border-radius:999px;min-width:28px;text-align:center;padding:2px 8px}
+  .cnt.filled{color:var(--ok);background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 22%,var(--line))}
+  .sec .inner{padding:0 2px 18px}.item{position:relative;border:1px solid var(--line);border-radius:14px;padding:15px;
+    margin-bottom:10px;background:var(--surface-soft)}
+  .item .del{position:absolute;z-index:2;top:10px;right:10px;width:34px;height:34px;border-radius:9px;border:1px solid color-mix(in srgb,var(--err) 30%,var(--line));
+    background:var(--surface);color:var(--err);font-size:11px;cursor:pointer;line-height:1}.item .del:hover{background:var(--err-soft)}
+  .item label{margin-top:12px}.item label:first-child{margin-top:0}.item .pr{padding-right:22px}
+  .item input,.item textarea{font-size:13.5px;border-radius:10px;padding:10px 12px}
+  .exp-item{padding:0;overflow:hidden}.exp-item>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    min-height:58px;padding:11px 14px;cursor:pointer}.exp-item>summary::-webkit-details-marker{display:none}.exp-summary-copy{min-width:0}
+  .exp-summary-copy strong{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.exp-summary-copy small{display:block;margin-top:3px;
+    color:var(--muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.exp-caret{width:27px;height:27px;display:grid;place-items:center;
+    border-radius:8px;background:var(--surface);border:1px solid var(--line);color:var(--muted);transition:transform .18s;flex:none}.exp-item[open] .exp-caret{transform:rotate(180deg)}
+  .exp-item[open]>summary{border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--accent-soft) 48%,var(--surface-soft))}.exp-body{position:relative;padding:14px}
+  .exp-body .del{top:10px;right:10px}.exp-body .pr{padding-right:28px}
+  .addbtn{width:100%;border:1px dashed var(--accent-line);background:var(--accent-soft);color:var(--accent);border-radius:11px;
+    padding:11px;font-weight:700;font-size:13px;cursor:pointer}.addbtn:hover{border-color:var(--accent)}
+  .hint{font-family:var(--sans);font-size:12px;color:var(--faint);font-style:normal;letter-spacing:0;text-transform:none;margin-top:7px}
+
+  .review-pane{max-width:1040px;margin:0 auto}.review-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:18px;align-items:start}
+  .review-rail{position:sticky;top:96px;display:flex;flex-direction:column;gap:12px}
+  .profile-summary{background:var(--surface);border:1px solid var(--line);border-radius:17px;padding:16px;box-shadow:0 10px 34px rgba(35,43,74,.05)}
+  .profile-head{display:flex;align-items:center;gap:11px}.profile-avatar{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+    background:linear-gradient(145deg,var(--accent),#7778ff);color:#fff;font-family:var(--display);font-size:12px;font-weight:700;letter-spacing:.02em;flex:none}
+  .profile-copy{min-width:0}.profile-copy small{display:block;color:var(--faint);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+  .profile-copy strong{display:block;margin-top:2px;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .completion{margin-top:15px}.completion-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:10.5px;font-weight:600;margin-bottom:7px}
+  .completion-meta strong{color:var(--ink)}.completion-track{height:6px;border-radius:999px;background:var(--surface-soft);overflow:hidden;border:1px solid var(--line)}
+  .completion-bar{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),#8d8eff);transition:width .3s ease}
+  .review-nav{display:flex;flex-direction:column;gap:3px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:15px}
+  .review-link{width:100%;height:38px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:flex;align-items:center;gap:9px;
+    padding:0 10px;text-align:left;font-size:12px;font-weight:600;cursor:pointer;transition:.14s}
+  .review-link::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--line-strong);flex:none}
+  .review-link:hover{background:var(--surface-soft);color:var(--ink)}.review-link.active{background:var(--accent-soft);color:var(--accent)}
+  .review-link.active::before{background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}
+  .review-form{min-width:0}.review-section{scroll-margin-top:96px}.identity-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:17px}
+  .identity-heading h2{font-family:var(--display);font-size:15px;margin:0}.identity-heading span{font-size:11px;color:var(--faint)}
+
+  .models{display:grid;grid-template-columns:1fr 1fr;gap:14px}.model{position:relative;text-align:left;cursor:pointer;border-radius:19px;
+    padding:0;overflow:hidden;background:var(--surface);border:1px solid var(--line);box-shadow:0 8px 30px rgba(35,43,74,.05);transition:.18s;font:inherit;color:inherit}
+  .model:hover{border-color:var(--line-strong);transform:translateY(-2px)}.model.sel{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}
+  .model .check{position:absolute;top:15px;right:15px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;
+    font-size:11px;display:none;align-items:center;justify-content:center;z-index:3;box-shadow:0 5px 14px rgba(91,92,240,.28)}.model.sel .check{display:flex}
+  .model-visual{height:204px;display:grid;place-items:center;overflow:hidden;border-bottom:1px solid var(--line);position:relative}
+  .model-visual.libens{background:linear-gradient(145deg,#f8fafc,#eef2f7)}.model-visual.compleo{background:linear-gradient(145deg,#f1f7fd,#e7f0fb)}
+  :root[data-theme="dark"] .model-visual.libens{background:linear-gradient(145deg,#1c222d,#151a23)}
+  :root[data-theme="dark"] .model-visual.compleo{background:linear-gradient(145deg,#172331,#131b27)}
+  .model-visual::after{content:"";position:absolute;width:190px;height:190px;border-radius:50%;right:-70px;top:-95px;background:rgba(255,255,255,.28)}
+  .mini-sheet{position:relative;z-index:1;width:126px;height:178px;background:#fff;border-radius:4px;padding:13px 12px;box-shadow:0 18px 38px rgba(37,45,70,.18);
+    transform:translateY(10px);transition:transform .2s}.model:hover .mini-sheet{transform:translateY(6px)}
+  .mini-sheet img{display:block;max-width:58px;max-height:20px;object-fit:contain}.mini-wordmark{text-align:center;color:#162f3a;font-family:var(--display);font-size:8px;font-weight:800;letter-spacing:.16em;margin:1px 0 9px}
+  .mini-sheet .mini-name{height:4px;width:46%;border-radius:4px;background:#e8792b;margin:0 auto 9px}.mini-section{height:3px;width:36%;border-radius:4px;background:#e8792b;margin:7px 0 5px}
+  .mini-line{display:block;height:2px;border-radius:3px;background:#dfe3ea;margin:4px 0}.mini-line.w80{width:80%}.mini-line.w65{width:65%}
+  .mini-blue{background:#2e75b6!important}.mini-bullets{display:grid;gap:4px;margin-top:6px}.mini-bullets span{height:2px;border-radius:2px;background:#d9dee7;width:92%}
+  .mini-bullets span:nth-child(2){width:78%}.mini-bullets span:nth-child(3){width:86%}
+  .mini-compleo-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:11px}.mini-compleo-head img{max-width:52px}
+  .mini-contact{width:30px;display:grid;gap:3px}.mini-contact i{height:2px;background:#c9d0da;border-radius:2px}.compleo-sheet .mini-name{background:#1f6fc0}
+  .model-info{padding:18px 19px 19px}.model .top{display:flex;align-items:center;gap:11px}.model .mn{font-family:var(--display);font-weight:700;font-size:15px}
+  .model .md{color:var(--muted);font-size:12.5px;margin-top:10px;line-height:1.5}.model .sw{display:flex;gap:6px;margin-top:14px}
+  .model .sw i{width:15px;height:15px;border-radius:5px;border:1px solid rgba(0,0,0,.08)}
+  .langtoggle{display:flex;align-items:center;gap:8px;margin-top:9px}.lang{border:1px solid var(--line-strong);background:var(--surface);
+    border-radius:10px;padding:9px 15px;font-weight:700;font-size:13px;cursor:pointer;color:var(--muted);transition:.15s}
+  .lang:hover{color:var(--ink)}.lang.sel{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .lang-code{font-size:10px;letter-spacing:.08em;margin-right:5px;opacity:.72}
+  .langspin{width:16px;height:16px;border:2px solid var(--accent-line);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;display:none}
+  .model-note{display:flex;align-items:center;gap:12px;padding:15px 17px!important;box-shadow:none}.model-note .note-icon{width:36px;height:36px;border-radius:10px;
+    display:grid;place-items:center;background:#edf6ff;color:#1f6fc0;flex:none}.model-note .note-icon svg{width:17px;height:17px}.model-note .note-copy{min-width:0;flex:1}
+  .model-note strong{display:block;font-size:13px}.model-note span{display:block;color:var(--muted);font-size:12px;margin-top:2px}.text-btn{border:0;background:transparent;
+    color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;padding:8px;border-radius:8px;white-space:nowrap}.text-btn:hover{background:var(--accent-soft)}
+
+  .genlayout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.65fr);gap:18px;align-items:start}.genlayout>.card{position:sticky;top:92px}
+  .previewbox{background:var(--surface-soft);border:1px solid var(--line);border-radius:var(--radius);padding:18px;min-height:530px;display:flex;
+    align-items:flex-start;justify-content:center}.previewbox iframe{width:100%;height:560px;border:1px solid var(--line-strong);border-radius:9px;background:#fff;
+    box-shadow:0 16px 42px -24px rgba(15,23,42,.45)}.empty{text-align:center;color:var(--faint);margin:auto;padding:40px 20px}
+  .empty .ic{width:52px;height:52px;border-radius:15px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;margin:0 auto;color:var(--faint)}
+  .empty .ic svg{width:23px;height:23px}.empty p{font-size:14px;line-height:1.5;margin:13px 0 0}
+  .preview-loading{width:100%;align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;color:var(--muted)}
+  .loading-sheet{width:min(72%,330px);aspect-ratio:210/297;border-radius:7px;background:linear-gradient(100deg,var(--surface) 20%,var(--surface-soft) 40%,var(--surface) 60%);
+    background-size:220% 100%;box-shadow:0 18px 42px -24px rgba(15,23,42,.4);animation:shimmer 1.25s ease-in-out infinite}
+  .preview-loading p{margin:0;font-size:13px;font-weight:600}@keyframes shimmer{to{background-position-x:-220%}}
+  .reclabel{font-weight:700;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.09em;margin-bottom:14px}
+  .recrow{display:flex;justify-content:space-between;gap:15px;font-size:13.5px;padding:12px 0;border-top:1px solid var(--line)}
+  .recrow:first-of-type{border-top:0;padding-top:0}.recrow .k{color:var(--muted)}.recrow .v{min-width:0;font-weight:700;text-align:right;max-width:62%;overflow-wrap:anywhere}
+  .dl{display:none;gap:9px;margin-top:12px}.dl.show{display:flex}.dl a{flex:1;height:42px;display:inline-flex;align-items:center;
+    justify-content:center;border-radius:10px;font-weight:700;font-size:13px}.dl a.pdf{border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+  .dl a.docx{background:var(--accent);color:#fff}
+
+  .nav{max-width:790px;margin:28px auto 0;display:flex;align-items:center;gap:10px}.nav .spacer{flex:1}
+  .toast{position:fixed;bottom:max(24px,calc(env(safe-area-inset-bottom) + 16px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--surface);
+    padding:12px 18px;border-radius:11px;font-size:13px;font-weight:600;box-shadow:0 18px 40px -16px rgba(0,0,0,.5);
+    z-index:60;opacity:0;pointer-events:none}.toast.show{opacity:1;animation:toastIn .22s ease both}
+
+  @media(max-width:900px){
+    .review-layout{grid-template-columns:1fr}.review-rail{position:static;display:grid;grid-template-columns:220px minmax(0,1fr);align-items:stretch}
+    .review-nav{flex-direction:row;align-items:center;overflow-x:auto;scrollbar-width:none}.review-nav::-webkit-scrollbar{display:none}.review-link{width:auto;min-width:max-content}
+  }
+  @media(max-width:860px){.product-state{display:none}.genlayout{grid-template-columns:1fr}.genlayout>.card{position:static;order:-1}.grid3{grid-template-columns:1fr}.previewbox{min-height:440px}}
+  @media(max-width:640px){
+    .top .in{height:60px;padding:0 16px}.brand .sub,.pill{display:none}.logo{width:35px;height:35px}.theme-toggle{margin-left:0}
+    .account-menu>summary{width:36px;padding:0;justify-content:center}.account-name,.account-menu>summary .chevron{display:none}.account-popover{position:fixed;top:68px;right:16px}
+    main{padding:24px 16px 48px}.stepper{margin-bottom:30px}.step .lbl{font-size:10.5px}.step .line{left:calc(-50% + 20px);right:calc(50% + 20px)}
+    .pane-head{text-align:left;margin-bottom:22px}.lead{margin-left:0}.card{padding:19px;border-radius:17px}.drop{padding:32px 16px}
+    .review-rail{display:flex;gap:10px}.profile-summary{padding:13px}.review-nav{padding:5px}.review-link{height:35px;padding:0 9px}
+    .item .del{width:40px;height:40px}.item .pr{padding-right:38px}
+    .row,.models,.grid-id,.grid2{display:grid;grid-template-columns:1fr}.row .btn{width:100%}.models{gap:12px}.model{padding:0}.model-visual{height:190px}
+    .langtoggle{flex-wrap:wrap}.genlayout{gap:12px}.previewbox{padding:10px;min-height:400px}.previewbox iframe{height:480px}
+    .nav{position:sticky;bottom:max(12px,env(safe-area-inset-bottom));z-index:20;margin-top:22px;padding:8px;background:color-mix(in srgb,var(--surface) 88%,transparent);
+      border:1px solid var(--line);border-radius:15px;backdrop-filter:blur(12px);box-shadow:var(--shadow)}.nav .btn{min-height:42px}
+    .toast{bottom:calc(env(safe-area-inset-bottom) + 82px);max-width:calc(100vw - 32px);text-align:center}
+  }
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="in">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6.5 3.5h7L18 8v12.5H6.5z"/><path d="M13.5 3.5V8H18M9 12h6M9 15h5"/></svg></div>
+      <div><div class="nm">CV&nbsp;Formatter</div><div class="sub">AI Studio</div></div>
+    </div>
+    <div class="spacer"></div>
+    <details class="account-menu" id="accountMenu">
+      <summary aria-label="Ouvrir le menu du compte">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+        <span class="account-name">{{ username }}</span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+      </summary>
+      <div class="account-popover">
+        <div class="account-meta">
+          <span class="account-avatar">{{ username[:1]|upper }}</span>
+          <span class="account-copy"><small>Connecté en tant que</small><strong>{{ username }}</strong></span>
+        </div>
+        <a class="account-action" href="/docs" target="_blank" rel="noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3.5h9L19 7v13.5H6z"/><path d="M15 3.5V7h4M9 11h7M9 15h7"/></svg>
+          Documentation API
+        </a>
+        <a class="account-action" href="/logout">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 17l5-5-5-5M20 12H9M12 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h6"/></svg>
+          Se déconnecter
+        </a>
+      </div>
+    </details>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Activer le thème sombre" title="Changer de thème">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.2 15.3A8.8 8.8 0 0 1 8.7 3.8 8.9 8.9 0 1 0 20.2 15.3Z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="stepper" id="stepper" aria-label="Progression de création du CV">
+    <div class="step" data-i="0"><span class="line"></span><button class="dot" type="button" aria-label="Étape 1, import">1</button><div class="lbl">Import</div></div>
+    <div class="step" data-i="1"><span class="line"></span><button class="dot" type="button" aria-label="Étape 2, vérification">2</button><div class="lbl">Vérifier</div></div>
+    <div class="step" data-i="2"><span class="line"></span><button class="dot" type="button" aria-label="Étape 3, modèle">3</button><div class="lbl">Modèle</div></div>
+    <div class="step" data-i="3"><span class="line"></span><button class="dot" type="button" aria-label="Étape 4, génération">4</button><div class="lbl">Générer</div></div>
+  </div>
+
+  <!-- STEP 1 -->
+  <section class="pane" data-pane="0">
+    <div class="pane-head center">
+      <div class="kicker">Étape 01 · Import</div>
+      <h1 style="font-size:clamp(30px,5vw,42px)">Transforme un CV en quelques instants</h1>
+      <p class="lead">Importe ton fichier. L’IA organise le contenu automatiquement, puis te laisse tout vérifier avant la mise en page.</p>
+    </div>
+    <div class="card center">
+      <label class="drop" id="drop" for="file" tabindex="0" role="button" aria-describedby="fileHelp">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M5 14v3.5A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5V14"/></svg></div>
+        <b>Dépose ton CV ici</b>
+        <small id="fileHelp">PDF, DOCX ou TXT · clique aussi pour parcourir</small>
+        <input type="file" id="file" accept=".pdf,.docx,.txt" hidden>
+      </label>
+      <div class="filechip" id="filechip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8.5 12.5 14 7a3 3 0 0 1 4.2 4.2l-7.4 7.4a5 5 0 0 1-7.1-7.1l7.4-7.4"/></svg><span class="nm" id="filename"></span><span class="tag">PRÊT</span></div>
+      <div class="row mt">
+        <button class="btn" id="btnExtract" style="flex:1"><span class="spin"></span><span>Analyser avec l’IA</span></button>
+        <button class="btn ghost" id="btnManual">Remplir à la main</button>
+      </div>
+      <div class="status" id="extractStatus" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="pane review-pane" data-pane="1" hidden>
+    <div class="pane-head left"><div class="kicker">Étape 02 · Vérification</div><h1 style="font-size:30px">Vérifie et complète le contenu</h1><p class="lead">Chaque information reste modifiable avant la génération.</p></div>
+    <div class="review-layout">
+      <aside class="review-rail" aria-label="Navigation du contenu du CV">
+        <div class="profile-summary">
+          <div class="profile-head"><div class="profile-avatar" id="profileAvatar">CV</div><div class="profile-copy"><small>Profil</small><strong id="profileTitle">À compléter</strong></div></div>
+          <div class="completion"><div class="completion-meta"><span>Complétion</span><strong id="completionLabel">0%</strong></div><div class="completion-track"><span class="completion-bar" id="completionBar"></span></div></div>
+        </div>
+        <nav class="review-nav">
+          <button class="review-link active" type="button" data-review-target="identitySection" aria-current="true">Identité</button>
+          <button class="review-link" type="button" data-review-target="experienceSection">Expériences</button>
+          <button class="review-link" type="button" data-review-target="skillsSection">Compétences</button>
+          <button class="review-link" type="button" data-review-target="educationSection">Formation</button>
+          <button class="review-link" type="button" data-review-target="extrasSection">Compléments</button>
+        </nav>
+      </aside>
+
+      <div class="card review-form">
+        <div class="review-section" id="identitySection">
+          <div class="identity-heading"><h2>Informations principales</h2><span>Champs modifiables</span></div>
+          <div class="grid-id">
+            <div><label for="f_initials">Initiales</label><input type="text" id="f_initials" placeholder="MJO"></div>
+            <div><label for="f_title">Titre / Poste</label><input type="text" id="f_title" placeholder="Consultant Salesforce Senior"></div>
+          </div>
+          <div class="mt">
+            <label for="f_full_name">Nom complet</label><input type="text" id="f_full_name" placeholder="Affiché sur le modèle Compleo">
+            <div class="hint">Affiché sur Compleo, remplacé par les initiales sur Libens.</div>
+            <input type="hidden" id="f_email"><input type="hidden" id="f_phone">
+          </div>
+          <div class="mt"><label for="f_summary">Synthèse / Résumé</label><textarea id="f_summary" placeholder="Résumé professionnel…"></textarea></div>
+        </div>
+
+        <details class="sec review-section" id="commercialSection"><summary><span class="l"><span class="caret">▸</span>Commercial <span class="hint" style="margin:0">— modèle Compleo</span></span></summary>
+          <div class="inner"><label for="f_commercial_name">Nom du commercial</label><input type="text" id="f_commercial_name" placeholder="ex: Taha NORDINE"><div class="grid2 mt"><div><label for="f_commercial_email">Email</label><input type="email" id="f_commercial_email" placeholder="prenom.nom@compleotech.net"></div><div><label for="f_commercial_phone">Téléphone</label><input type="tel" inputmode="tel" id="f_commercial_phone"></div></div><div class="hint">Affiché en haut à droite du CV Compleo.</div></div>
+        </details>
+        <details class="sec review-section" id="highlightsSection"><summary><span class="l"><span class="caret">▸</span>Résumé des expériences</span><span class="cnt" id="c_hl">0</span></summary><div class="inner"><div id="l_highlights"></div><button class="addbtn" data-add="highlights">+ Ajouter une ligne</button></div></details>
+        <details class="sec review-section" id="skillsSection"><summary><span class="l"><span class="caret">▸</span>Compétences</span><span class="cnt" id="c_sk">0</span></summary><div class="inner"><div id="l_skills"></div><button class="addbtn" data-add="skills">+ Ajouter un groupe</button></div></details>
+        <details class="sec review-section" id="experienceSection" open><summary><span class="l"><span class="caret">▸</span>Expériences</span><span class="cnt" id="c_ex">0</span></summary><div class="inner"><div id="l_exp"></div><button class="addbtn" data-add="exp">+ Ajouter une expérience</button></div></details>
+        <details class="sec review-section" id="educationSection"><summary><span class="l"><span class="caret">▸</span>Formations</span><span class="cnt" id="c_ed">0</span></summary><div class="inner"><div id="l_edu"></div><button class="addbtn" data-add="edu">+ Ajouter une formation</button></div></details>
+        <div class="review-section" id="extrasSection">
+          <details class="sec"><summary><span class="l"><span class="caret">▸</span>Certifications</span><span class="cnt" id="c_ce">0</span></summary><div class="inner"><div id="l_certs"></div><button class="addbtn" data-add="certs">+ Ajouter</button></div></details>
+          <details class="sec"><summary><span class="l"><span class="caret">▸</span>Langues</span><span class="cnt" id="c_la">0</span></summary><div class="inner"><div id="l_langs"></div><button class="addbtn" data-add="langs">+ Ajouter</button></div></details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="pane narrow" data-pane="2" hidden>
+    <div class="pane-head left"><div class="kicker">Étape 03 · Modèle</div><h1 style="font-size:30px">Choisis le rendu final</h1><p class="lead">Sélectionne l’identité visuelle et la langue du document.</p></div>
+    <div class="models">
+      <button class="model sel" data-model="libens" type="button" aria-pressed="true">
+        <div class="check">✓</div>
+        <div class="model-visual libens" aria-hidden="true"><div class="mini-sheet libens-sheet"><div class="mini-wordmark">LIBENS</div><div class="mini-name"></div><div class="mini-section"></div><span class="mini-line"></span><span class="mini-line w80"></span><span class="mini-line w65"></span><div class="mini-section"></div><div class="mini-bullets"><span></span><span></span><span></span></div><div class="mini-section mini-blue"></div><span class="mini-line"></span><span class="mini-line w80"></span></div></div>
+        <div class="model-info"><div class="top"><div class="mn">Libens Consulting</div></div><div class="md">Épuré et anonymisé · titres orange · expériences structurées en bleu.</div></div>
+      </button>
+      <button class="model" data-model="compleo" type="button" aria-pressed="false">
+        <div class="check">✓</div>
+        <div class="model-visual compleo" aria-hidden="true"><div class="mini-sheet compleo-sheet"><div class="mini-compleo-head"><img src="/static/logos/compleo.png" alt=""><span class="mini-contact"><i></i><i></i><i></i></span></div><div class="mini-name"></div><div class="mini-section"></div><span class="mini-line mini-blue"></span><span class="mini-line mini-blue w80"></span><span class="mini-line mini-blue w65"></span><div class="mini-section"></div><div class="mini-bullets"><span></span><span></span><span></span></div><div class="mini-section"></div><span class="mini-line mini-blue"></span><span class="mini-line mini-blue w80"></span></div></div>
+        <div class="model-info"><div class="top"><div class="mn">Compleo Technologies</div></div><div class="md">Identité complète · contact commercial · contenu professionnel en bleu.</div></div>
+      </button>
+    </div>
+    <div class="card mt" style="padding:22px">
+      <label>Langue du contenu — traduit le CV via l'IA</label>
+      <div class="langtoggle" role="group" aria-label="Langue du document">
+        <button class="lang sel" data-lang="fr" type="button" aria-pressed="true"><span class="lang-code">FR</span> Français</button>
+        <button class="lang" data-lang="en" type="button" aria-pressed="false"><span class="lang-code">EN</span> English</button>
+        <span class="langspin" id="langSpin"></span>
+      </div>
+      <div class="status" id="langStatus" role="status" aria-live="polite"></div>
+    </div>
+    <div class="card model-note mt" id="compleoNote" hidden>
+      <div class="note-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></div>
+      <div class="note-copy"><strong>Contact commercial Compleo</strong><span>Le contact configuré par défaut sera appliqué au document.</span></div>
+      <button class="text-btn" id="editCommercial" type="button">Personnaliser</button>
+    </div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section class="pane" data-pane="3" hidden style="max-width:960px;margin:0 auto">
+    <div class="pane-head"><div class="kicker">Étape 04 · Export</div><h1 style="font-size:30px">Prévisualise et télécharge ton CV</h1><p class="lead">Le document est composé automatiquement dans les deux formats.</p></div>
+    <div class="genlayout">
+      <div class="previewbox" id="previewbox">
+        <div class="empty"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6.5 3.5h7L18 8v12.5H6.5z"/><path d="M13.5 3.5V8H18M9 12h6M9 15h6"/></svg></div><p>L’aperçu du document apparaîtra ici<br>après la génération.</p></div>
+      </div>
+      <div class="card" style="padding:24px">
+        <div class="reclabel">Récapitulatif</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="recrow"><span class="k">Modèle</span><span class="v" id="r_model">Libens Consulting</span></div>
+          <div class="recrow"><span class="k">Langue</span><span class="v" id="r_lang">Français</span></div>
+          <div class="recrow"><span class="k">Poste</span><span class="v" id="r_title">—</span></div>
+          <div class="recrow"><span class="k">Expériences</span><span class="v" id="r_exp">0</span></div>
+        </div>
+        <button class="btn block dark" id="btnGenerate" style="margin-top:18px"><span class="spin"></span><span>Générer le CV — PDF + Word</span></button>
+        <div class="status" id="genStatus" role="status" aria-live="polite"></div>
+        <div class="dl" id="dlRow"><a class="pdf" id="dlPdf" target="_blank" rel="noopener">PDF</a><a class="docx" id="dlDocx" target="_blank" rel="noopener">Word</a></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="nav">
+    <button class="btn ghost" id="btnBack" hidden>← Retour</button>
+    <div class="spacer"></div>
+    <button class="btn dark" id="btnNext">Continuer →</button>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const $=(s)=>document.querySelector(s), $$=(s)=>document.querySelectorAll(s);
+let MODEL='libens', LANG='fr', STEP=0, MAX_STEP=0, RESULT=null;
+let extractRequest=0, translationRequest=0, generationRequest=0, LAST_TRANSLATED_TARGET=null;
+let TRANSLATION_BASE=null, translationBusy=false, initialsEdited=false;
+
+/* ---------- Thème ---------- */
+const themeToggle=$('#themeToggle');
+function syncThemeButton(){
+  const dark=document.documentElement.dataset.theme==='dark';
+  themeToggle.setAttribute('aria-label',dark?'Activer le thème clair':'Activer le thème sombre');
+  document.querySelector('meta[name="theme-color"]').content=dark?'#0d1017':'#f5f6f8';
+}
+themeToggle.onclick=()=>{
+  const next=document.documentElement.dataset.theme==='dark'?'light':'dark';
+  document.documentElement.dataset.theme=next;
+  try{localStorage.setItem('cvf-theme',next);}catch(_){}
+  syncThemeButton();
+};
+syncThemeButton();
+
+/* ---------- Menu du compte ---------- */
+const accountMenu=$('#accountMenu');
+document.addEventListener('click',(event)=>{
+  if(accountMenu.open&&!accountMenu.contains(event.target)) accountMenu.open=false;
+});
+document.addEventListener('keydown',(event)=>{
+  if(event.key==='Escape'&&accountMenu.open){accountMenu.open=false;accountMenu.querySelector('summary').focus();}
+});
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+function busy(b,on){b.classList.toggle('loading',on);b.disabled=on;}
+function setStatus(el,cls,m){el.className='status '+cls;el.textContent=m;}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function splitLines(s){return s.split('\n').map(x=>x.trim()).filter(Boolean);}
+function emptyPreview(){return '<div class="empty"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6.5 3.5h7L18 8v12.5H6.5z"/><path d="M13.5 3.5V8H18M9 12h6M9 15h6"/></svg></div><p>L’aperçu du document apparaîtra ici<br>après la génération.</p></div>';}
+function invalidateOutput(){
+  generationRequest++;RESULT=null;
+  $('#dlRow').classList.remove('show');$('#previewbox').innerHTML=emptyPreview();
+  $('#btnGenerate').querySelector('span:last-child').textContent='Générer le CV — PDF + Word';
+  busy($('#btnGenerate'),false);setStatus($('#genStatus'),'','');
+}
+
+let CV=emptyCV();
+function emptyCV(){return{initials:'',title:'',full_name:null,email:null,phone:null,summary:'',
+  commercial_name:null,commercial_email:null,commercial_phone:null,
+  experience_highlights:[],skill_groups:[],experiences:[],education:[],certifications:[],languages:[]};}
+function normalize(o){return Object.assign(emptyCV(),o||{});}
+function cloneCV(cv){return JSON.parse(JSON.stringify(cv));}
+
+function setTranslationBusy(on){
+  translationBusy=on;$('#langSpin').style.display=on?'inline-block':'none';
+  $$('.lang').forEach(x=>x.disabled=on);$('#btnNext').disabled=on;$('#btnBack').disabled=on;
+  $$('#stepper .step').forEach(s=>{const i=+s.dataset.i,button=s.querySelector('.dot'),disabled=on||i>MAX_STEP;
+    button.disabled=disabled;button.setAttribute('aria-disabled',disabled?'true':'false');});
+}
+function cancelTranslation(){
+  if(!translationBusy)return;
+  translationRequest++;setTranslationBusy(false);setStatus($('#langStatus'),'','');
+}
+function markContentEdited(){
+  TRANSLATION_BASE=null;LAST_TRANSLATED_TARGET=null;cancelTranslation();setStatus($('#langStatus'),'','');
+}
+function resetForNewCV(){
+  extractRequest++;translationRequest++;generationRequest++;
+  translationBusy=false;TRANSLATION_BASE=null;LAST_TRANSLATED_TARGET=null;LANG='fr';initialsEdited=false;
+  $$('.lang').forEach(x=>{const selected=x.dataset.lang==='fr';x.classList.toggle('sel',selected);x.setAttribute('aria-pressed',selected?'true':'false');x.disabled=false;});
+  $('#langSpin').style.display='none';$('#btnNext').disabled=false;$('#btnBack').disabled=false;
+  setStatus($('#langStatus'),'','');setStatus($('#extractStatus'),'','');
+  busy($('#btnExtract'),false);MAX_STEP=0;CV=emptyCV();renderForm();
+}
+
+/* ---------- Stepper ---------- */
+function goStep(n){
+  if(n<0||n>3) return;
+  STEP=n;MAX_STEP=Math.max(MAX_STEP,n);
+  $$('.pane').forEach(p=>p.hidden=(+p.dataset.pane!==n));
+  $$('#stepper .step').forEach(s=>{
+    const i=+s.dataset.i,button=s.querySelector('.dot');
+    s.classList.toggle('on',i===n);s.classList.toggle('done',i<=MAX_STEP&&i!==n);
+    button.setAttribute('aria-current',i===n?'step':'false');
+    const disabled=translationBusy||i>MAX_STEP;button.disabled=disabled;button.setAttribute('aria-disabled',disabled?'true':'false');
+  });
+  $('#btnBack').hidden = n===0;
+  const next=$('#btnNext'); next.hidden = n===0||n===3;
+  $('#btnBack').disabled=translationBusy;next.disabled=translationBusy;
+  next.textContent = n===2 ? 'Créer l’aperçu →' : 'Continuer →';
+  if(n===2)updateCompleoNote();if(n===3)refreshRecap();
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(n>0){const heading=$('.pane[data-pane="'+n+'"] h1');if(heading){heading.tabIndex=-1;setTimeout(()=>heading.focus({preventScroll:true}),220);}}
+}
+$$('#stepper .step .dot').forEach(d=>d.onclick=()=>{const i=+d.parentElement.dataset.i;if(i<=MAX_STEP)goStep(i);});
+$('#btnBack').onclick=()=>goStep(STEP-1);
+function validateBeforeGenerate(){
+  if(!CV.title.trim()){
+    goStep(1);toast('Ajoute d’abord le titre du poste.');setTimeout(()=>{$('#f_title').focus();$('#f_title').scrollIntoView({behavior:'smooth',block:'center'});},220);return false;
+  }
+  const email=$('#f_commercial_email');
+  if(MODEL==='compleo'&&!email.checkValidity()){
+    goStep(1);$('#commercialSection').open=true;toast('Vérifie l’adresse email du commercial.');
+    setTimeout(()=>{email.focus();email.reportValidity();email.scrollIntoView({behavior:'smooth',block:'center'});},220);return false;
+  }
+  return true;
+}
+$('#btnNext').onclick=()=>{
+  if(STEP===1&&!CV.title.trim()){
+    toast('Ajoute d’abord le titre du poste.');$('#f_title').focus();$('#f_title').scrollIntoView({behavior:'smooth',block:'center'});return;
+  }
+  if(STEP===2){if(!validateBeforeGenerate())return;goStep(3);generateCV();return;}
+  goStep(STEP+1);
+};
+
+/* ---------- Upload ---------- */
+const drop=$('#drop'),fileInput=$('#file');
+drop.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();fileInput.click();}});
+['dragover','dragenter'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('drag');}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('drag');}));
+drop.addEventListener('drop',ev=>{if(ev.dataTransfer.files[0]){fileInput.files=ev.dataTransfer.files;showFile();}});
+fileInput.addEventListener('change',showFile);
+function showFile(){const f=fileInput.files[0];if(f){resetForNewCV();goStep(0);
+  $('#filename').textContent=f.name;const size=f.size<1048576?Math.max(1,Math.round(f.size/1024))+' Ko':(f.size/1048576).toFixed(1)+' Mo';
+  $('#filechip .tag').textContent=size+' · PRÊT';$('#filechip').classList.add('show');}}
+
+$('#btnExtract').onclick=async()=>{
+  const f=fileInput.files[0],st=$('#extractStatus');
+  if(!f){setStatus(st,'err','Choisis d’abord un fichier.');return;}
+  const requestId=++extractRequest;
+  busy($('#btnExtract'),true);setStatus(st,'busy','Extraction par l’IA en cours…');
+  try{
+    const fd=new FormData();fd.append('file',f);
+    const r=await fetch('/v1/cv/extract',{method:'POST',body:fd});
+    if(r.status===401){location.href='/login';return;}
+    if(!r.ok)throw new Error((await r.json()).detail||r.status);
+    const payload=await r.json();
+    if(requestId!==extractRequest)return;
+    CV=normalize(payload);renderForm();
+    setStatus(st,'ok','CV structuré ✓');toast('CV extrait avec succès');goStep(1);
+  }catch(e){if(requestId===extractRequest)setStatus(st,'err','Erreur : '+e.message);}
+  finally{if(requestId===extractRequest)busy($('#btnExtract'),false);}
+};
+$('#btnManual').onclick=()=>{resetForNewCV();goStep(1);};
+
+/* ---------- Formulaire ---------- */
+function renderForm(){
+  $('#f_initials').value=CV.initials||'';$('#f_title').value=CV.title||'';
+  $('#f_full_name').value=CV.full_name||'';$('#f_email').value=CV.email||'';$('#f_phone').value=CV.phone||'';
+  $('#f_summary').value=CV.summary||'';
+  $('#f_commercial_name').value=CV.commercial_name||'';$('#f_commercial_email').value=CV.commercial_email||'';$('#f_commercial_phone').value=CV.commercial_phone||'';
+  renderLines('#l_highlights',CV.experience_highlights,'ex: RENAULT | Consultant Senior – 2025');
+  renderSkills();renderExp();renderEdu();
+  renderLines('#l_certs',CV.certifications,'ex: Platform Administrator');
+  renderLines('#l_langs',CV.languages,'ex: Français – Natif');
+  updCounts();
+}
+function updCounts(){
+  const values={c_hl:CV.experience_highlights.length,c_sk:CV.skill_groups.length,c_ex:CV.experiences.length,c_ed:CV.education.length,c_ce:CV.certifications.length,c_la:CV.languages.length};
+  const meaningful={c_hl:CV.experience_highlights.some(x=>x.trim()),c_sk:CV.skill_groups.some(x=>x.category.trim()||x.items.length),
+    c_ex:CV.experiences.some(x=>x.company.trim()||x.role.trim()),c_ed:CV.education.some(x=>x.degree.trim()),
+    c_ce:CV.certifications.some(x=>x.trim()),c_la:CV.languages.some(x=>x.trim())};
+  Object.entries(values).forEach(([id,count])=>{const el=$('#'+id);el.textContent=count;el.classList.toggle('filled',meaningful[id]);});
+  updateProfileSummary();invalidateOutput();
+}
+
+function updateProfileSummary(){
+  const checks=[CV.title.trim(), (CV.initials||CV.full_name||'').trim(), CV.summary.trim(),
+    CV.experiences.some(x=>x.company.trim()||x.role.trim()),CV.skill_groups.some(x=>x.category.trim()||x.items.length),
+    CV.education.some(x=>x.degree.trim()),CV.certifications.some(x=>x.trim())||CV.languages.some(x=>x.trim())];
+  const score=Math.round(checks.filter(Boolean).length/checks.length*100);
+  $('#profileAvatar').textContent=(CV.initials||computeInitials(CV.full_name)||'CV').slice(0,3).toUpperCase();
+  $('#profileTitle').textContent=CV.title||'À compléter';
+  $('#completionLabel').textContent=score+'%';$('#completionBar').style.width=score+'%';
+}
+
+$$('.review-link').forEach(link=>link.onclick=()=>{
+  const target=$('#'+link.dataset.reviewTarget);if(!target)return;
+  if(target.matches('details'))target.open=true;
+  $$('.review-link').forEach(x=>{const active=x===link;x.classList.toggle('active',active);x.setAttribute('aria-current',active?'true':'false');});
+  link.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  target.scrollIntoView({behavior:'smooth',block:'start'});
+});
+
+function renderLines(sel,arr,ph){const box=$(sel);box.innerHTML='';
+  arr.forEach((v,i)=>{const d=document.createElement('div');d.className='item';
+    d.innerHTML='<button class="del" type="button" aria-label="Supprimer l’élément '+(i+1)+'">✕</button><input type="text" aria-label="Élément '+(i+1)+'" value="'+esc(v)+'" placeholder="'+ph+'">';
+    d.querySelector('.del').onclick=()=>{arr.splice(i,1);renderLines(sel,arr,ph);updCounts();};
+    d.querySelector('input').oninput=e=>{arr[i]=e.target.value;updCounts();};box.appendChild(d);});}
+
+function renderSkills(){const box=$('#l_skills');box.innerHTML='';
+  CV.skill_groups.forEach((g,i)=>{const d=document.createElement('div');d.className='item';
+    d.innerHTML='<button class="del" type="button" aria-label="Supprimer le groupe de compétences '+(i+1)+'">✕</button><label>Catégorie</label><input type="text" aria-label="Catégorie du groupe '+(i+1)+'" value="'+esc(g.category||'')+'" placeholder="ex: Salesforce / CRM"><label>Compétences (une par ligne)</label><textarea aria-label="Compétences du groupe '+(i+1)+'" placeholder="Sales Cloud&#10;Service Cloud">'+esc((g.items||[]).join('\n'))+'</textarea>';
+    d.querySelector('.del').onclick=()=>{CV.skill_groups.splice(i,1);renderSkills();updCounts();};
+    d.querySelector('input').oninput=e=>{g.category=e.target.value;updCounts();};
+    d.querySelector('textarea').oninput=e=>{g.items=splitLines(e.target.value);updCounts();};box.appendChild(d);});}
+
+function renderExp(){const box=$('#l_exp');box.innerHTML='';
+  CV.experiences.forEach((x,i)=>{const d=document.createElement('details');d.className='item exp-item';d.open=i===0;
+    const sub=[x.role,x.period].filter(Boolean).join(' · ')||'À compléter';
+    d.innerHTML='<summary><span class="exp-summary-copy"><strong>'+esc(x.company||'Expérience '+(i+1))+'</strong><small>'+esc(sub)+'</small></span><span class="exp-caret">⌄</span></summary><div class="exp-body"><button class="del" type="button" aria-label="Supprimer l’expérience '+(i+1)+'">✕</button><div class="pr"><div class="grid2"><div><label>Entreprise</label><input aria-label="Entreprise de l’expérience '+(i+1)+'" data-k="company" type="text" value="'+esc(x.company||'')+'"></div><div><label>Période</label><input aria-label="Période de l’expérience '+(i+1)+'" data-k="period" type="text" value="'+esc(x.period||'')+'" placeholder="01/2025 – 12/2025"></div></div><div class="grid2 mt"><div><label>Poste</label><input aria-label="Poste de l’expérience '+(i+1)+'" data-k="role" type="text" value="'+esc(x.role||'')+'"></div><div><label>Lieu</label><input aria-label="Lieu de l’expérience '+(i+1)+'" data-k="location" type="text" value="'+esc(x.location||'')+'"></div></div><label>Contexte</label><textarea aria-label="Contexte de l’expérience '+(i+1)+'" data-k="context">'+esc(x.context||'')+'</textarea><label>Tâches / Responsabilités (une par ligne)</label><textarea aria-label="Responsabilités de l’expérience '+(i+1)+'" data-k="responsibilities">'+esc((x.responsibilities||[]).join('\n'))+'</textarea><label>Environnement technique</label><input aria-label="Environnement technique de l’expérience '+(i+1)+'" data-k="tech_environment" type="text" value="'+esc(x.tech_environment||'')+'"></div></div>';
+    d.querySelector('.del').onclick=()=>{CV.experiences.splice(i,1);renderExp();updCounts();};
+    d.querySelectorAll('[data-k]').forEach(el=>el.oninput=e=>{const k=el.dataset.k;x[k]=k==='responsibilities'?splitLines(e.target.value):e.target.value;
+      d.querySelector('strong').textContent=x.company||'Expérience '+(i+1);d.querySelector('small').textContent=[x.role,x.period].filter(Boolean).join(' · ')||'À compléter';updCounts();});
+    d.addEventListener('toggle',()=>{if(d.open)box.querySelectorAll('.exp-item[open]').forEach(other=>{if(other!==d)other.open=false;});});
+    box.appendChild(d);});}
+
+function renderEdu(){const box=$('#l_edu');box.innerHTML='';
+  CV.education.forEach((e0,i)=>{const d=document.createElement('div');d.className='item';
+    d.innerHTML='<button class="del" type="button" aria-label="Supprimer la formation '+(i+1)+'">✕</button><div class="pr"><label>Diplôme</label><input aria-label="Diplôme de la formation '+(i+1)+'" data-k="degree" type="text" value="'+esc(e0.degree||'')+'"><div class="grid2 mt"><div><label>École</label><input aria-label="École de la formation '+(i+1)+'" data-k="school" type="text" value="'+esc(e0.school||'')+'"></div><div><label>Période</label><input aria-label="Période de la formation '+(i+1)+'" data-k="period" type="text" value="'+esc(e0.period||'')+'"></div></div></div>';
+    d.querySelector('.del').onclick=()=>{CV.education.splice(i,1);renderEdu();updCounts();};
+    d.querySelectorAll('[data-k]').forEach(el=>el.oninput=ev=>{e0[el.dataset.k]=ev.target.value;updCounts();});
+    box.appendChild(d);});}
+
+$$('[data-add]').forEach(b=>b.onclick=()=>{const t=b.dataset.add;
+  if(t==='highlights'){CV.experience_highlights.push('');renderLines('#l_highlights',CV.experience_highlights,'');}
+  if(t==='skills'){CV.skill_groups.push({category:'',items:[]});renderSkills();}
+  if(t==='exp'){CV.experiences.push({company:'',role:'',location:'',period:'',context:'',responsibilities:[],tech_environment:''});renderExp();}
+  if(t==='edu'){CV.education.push({degree:'',school:'',period:''});renderEdu();}
+  if(t==='certs'){CV.certifications.push('');renderLines('#l_certs',CV.certifications,'');}
+  if(t==='langs'){CV.languages.push('');renderLines('#l_langs',CV.languages,'');}
+  updCounts();});
+
+const NULLABLE=['full_name','email','phone','commercial_name','commercial_email','commercial_phone'];
+[['f_initials','initials'],['f_title','title'],['f_full_name','full_name'],['f_email','email'],['f_phone','phone'],['f_summary','summary'],
+ ['f_commercial_name','commercial_name'],['f_commercial_email','commercial_email'],['f_commercial_phone','commercial_phone']]
+  .forEach(([id,k])=>$('#'+id).addEventListener('input',e=>{CV[k]=e.target.value||(NULLABLE.includes(k)?null:'');updateProfileSummary();invalidateOutput();}));
+
+/* Code anonymisé depuis le nom complet */
+function computeInitials(name){const p=(name||'').trim().split(/\s+/).filter(Boolean);if(!p.length)return '';
+  const f=p[0],l=p[p.length-1];return (p.length===1?f[0]+f[f.length-1]:f[0]+l[0]+l[l.length-1]).toUpperCase();}
+$('#f_initials').addEventListener('input',()=>initialsEdited=true);
+$('#f_full_name').addEventListener('input',e=>{if(initialsEdited)return;const c=computeInitials(e.target.value);$('#f_initials').value=c;CV.initials=c;updateProfileSummary();});
+$('.review-form').addEventListener('input',markContentEdited,true);
+$('.review-form').addEventListener('click',event=>{if(event.target.closest('[data-add],.del'))markContentEdited();},true);
+
+/* ---------- Modèle / langue ---------- */
+function updateCompleoNote(){
+  const note=$('#compleoNote');note.hidden=MODEL!=='compleo';
+  const detail=note.querySelector('.note-copy span');
+  detail.textContent=CV.commercial_name?'Contact sélectionné : '+CV.commercial_name+'.':'Le contact configuré par défaut sera appliqué au document.';
+}
+$$('.model').forEach(m=>m.onclick=()=>{
+  $$('.model').forEach(x=>{x.classList.remove('sel');x.setAttribute('aria-pressed','false');});
+  m.classList.add('sel');m.setAttribute('aria-pressed','true');MODEL=m.dataset.model;invalidateOutput();updateCompleoNote();
+});
+$('#editCommercial').onclick=()=>{goStep(1);const section=$('#commercialSection');section.open=true;setTimeout(()=>section.scrollIntoView({behavior:'smooth',block:'start'}),80);};
+$$('.lang').forEach(b=>b.onclick=async()=>{
+  const target=b.dataset.lang;if(target===LANG&&LAST_TRANSLATED_TARGET===target)return;
+  const requestId=++translationRequest;
+  const st=$('#langStatus');setStatus(st,'busy','Traduction du contenu par l’IA…');setTranslationBusy(true);
+  if(!TRANSLATION_BASE)TRANSLATION_BASE=cloneCV(CV);
+  try{
+    const r=await fetch('/v1/cv/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cv:TRANSLATION_BASE,target_language:target})});
+    if(r.status===401){location.href='/login';return;}
+    if(!r.ok)throw new Error((await r.json()).detail||r.status);
+    const payload=await r.json();
+    if(requestId!==translationRequest)return;
+    CV=normalize(payload);renderForm();
+    LANG=target;LAST_TRANSLATED_TARGET=target;$$('.lang').forEach(x=>{const selected=x.dataset.lang===target;x.classList.toggle('sel',selected);x.setAttribute('aria-pressed',selected?'true':'false');});
+    setStatus(st,'ok','Contenu traduit ✓ ('+(target==='fr'?'Français':'English')+')');toast('CV traduit');
+  }catch(e){if(requestId===translationRequest)setStatus(st,'err','Erreur : '+e.message);}
+  finally{if(requestId===translationRequest)setTranslationBusy(false);}
+});
+
+/* ---------- Récap + génération ---------- */
+function refreshRecap(){
+  $('#r_model').textContent = MODEL==='libens'?'Libens Consulting':'Compleo Technologies';
+  $('#r_lang').textContent = LANG==='fr'?'Français':'English';
+  $('#r_title').textContent = CV.title||'—';
+  $('#r_exp').textContent = CV.experiences.length;
+}
+async function generateCV(){
+  const st=$('#genStatus');
+  if(translationBusy){toast('Attends la fin de la traduction.');return false;}
+  if(!validateBeforeGenerate())return false;
+  const requestId=++generationRequest;RESULT=null;
+  $('#previewbox').innerHTML='<div class="preview-loading"><div class="loading-sheet"></div><p>Composition du document…</p></div>';
+  $('#dlRow').classList.remove('show');
+  busy($('#btnGenerate'),true);setStatus(st,'busy','Génération en cours…');
+  try{
+    const r=await fetch('/v1/cv/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cv:CV,model:MODEL,language:LANG})});
+    if(r.status===401){location.href='/login';return;}
+    if(!r.ok)throw new Error((await r.json()).detail||r.status);
+    const payload=await r.json();
+    if(requestId!==generationRequest)return false;
+    RESULT=payload;
+    $('#previewbox').innerHTML='<iframe title="Aperçu du CV généré" src="'+RESULT.pdf_url+'#toolbar=1"></iframe>';
+    $('#dlPdf').href=RESULT.pdf_url+'&dl=1';$('#dlDocx').href=RESULT.docx_url+'&dl=1';
+    $('#dlRow').classList.add('show');
+    $('#btnGenerate').querySelector('span:last-child').textContent='↻ Régénérer';
+    setStatus(st,'ok','CV généré ✓');toast('CV généré — PDF + Word prêts');
+    return true;
+  }catch(e){
+    if(requestId!==generationRequest)return false;
+    setStatus(st,'err','Erreur : '+e.message);
+    $('#previewbox').innerHTML='<div class="empty"><div class="ic">!</div><p>La génération a échoué.<br>Corrige les informations puis réessaie.</p></div>';
+    return false;
+  }finally{if(requestId===generationRequest)busy($('#btnGenerate'),false);}
+}
+$('#btnGenerate').onclick=generateCV;
+
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}
+
+goStep(0);
+</script>
+</body>
+</html>

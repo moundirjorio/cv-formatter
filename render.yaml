@@ -1,0 +1,41 @@
+# Blueprint de déploiement Render — https://render.com
+# Déploie l'app FastAPI avec HTTPS automatique et un disque persistant.
+#
+# Les valeurs marquées « sync: false » sont des SECRETS : tu les saisis dans le
+# tableau de bord Render (jamais dans le code). SESSION_SECRET est généré
+# automatiquement par Render.
+services:
+  - type: web
+    name: cv-formatter
+    runtime: python
+    plan: starter            # requis pour le disque persistant (~7 $/mois)
+    region: frankfurt        # proche de la France
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true         # redéploie à chaque push GitHub
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: APP_ENV
+        value: production     # active les cookies Secure (HTTPS)
+      - key: DATA_DIR
+        value: /var/data      # dossier persistant (comptes + CV générés)
+      - key: SESSION_SECRET
+        generateValue: true   # Render génère un secret aléatoire fort
+      - key: SESSION_HOURS
+        value: "12"
+      - key: ANTHROPIC_API_KEY
+        sync: false           # ← à saisir dans le dashboard
+      - key: CV_API_KEYS
+        sync: false           # ← clés API acceptées (change-les)
+      - key: LOGIN_USER
+        sync: false           # ← identifiant admin
+      - key: LOGIN_PASSWORD
+        sync: false           # ← mot de passe admin (PAS "changeme")
+      - key: CLAUDE_MODEL
+        value: claude-opus-4-8
+    disk:
+      name: cv-data
+      mountPath: /var/data    # doit correspondre à DATA_DIR
+      sizeGB: 1

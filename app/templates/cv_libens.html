@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: a4 portrait; margin: 1.4cm 1.8cm 1.6cm 1.8cm; }
+  body { font-family: Helvetica, Arial, sans-serif; color: #1a1a1a; font-size: 9.5pt; line-height: 1.35; }
+
+  .logo-wrap { text-align: center; margin: 0 0 6pt 0; }
+  .logo { height: 46pt; }
+
+  .title-block { text-align: center; margin: 0 0 10pt 0; }
+  .initials { color: {{ orange }}; font-weight: bold; font-size: 13pt; margin: 0; text-align: center; }
+  .job-title { color: {{ orange }}; font-weight: bold; font-size: 11pt; margin: 2pt 0 0 0; text-align: center; }
+
+  h2.section { color: {{ orange }}; font-size: 10.5pt; font-weight: bold;
+               letter-spacing: .3pt; margin: 12pt 0 4pt 0; }
+  p { margin: 0 0 5pt 0; text-align: justify; }
+
+  .skill-cat { font-weight: bold; margin: 6pt 0 1pt 0; }
+  ul { margin: 0 0 4pt 0; padding-left: 14pt; }
+  li { margin: 0 0 1pt 0; }
+
+  .exp { margin-top: 8pt; }
+  .exp .company { color: {{ blue }}; font-weight: bold; font-size: 10.5pt; margin: 0; }
+  .exp .role { color: {{ blue }}; font-weight: bold; margin: 1pt 0 0 0; }
+  .exp .period { color: {{ blue }}; margin: 0 0 3pt 0; }
+  .lbl { font-weight: bold; margin: 5pt 0 1pt 0; }
+  .tech { margin-top: 3pt; }
+</style>
+</head>
+<body>
+
+{% if logo_data_uri %}<div class="logo-wrap"><img src="{{ logo_data_uri }}" class="logo" /></div>{% endif %}
+
+<div class="title-block">
+  {% if cv.initials %}<p class="initials">{{ cv.initials }}</p>{% endif %}
+  <p class="job-title">{{ cv.title }}</p>
+</div>
+
+{% if cv.summary %}
+<h2 class="section">{{ L.summary|upper }}</h2>
+{% for para in cv.summary.split('\n') if para.strip() %}
+<p>{{ para.strip() }}</p>
+{% endfor %}
+{% endif %}
+
+{% if cv.experience_highlights %}
+<h2 class="section">{{ L.highlights|upper }}</h2>
+<ul>{% for h in cv.experience_highlights %}<li>{{ h }}</li>{% endfor %}</ul>
+{% endif %}
+
+{% if cv.skill_groups %}
+<h2 class="section">{{ L.skills|upper }}</h2>
+{% for g in cv.skill_groups %}
+<p class="skill-cat">{{ g.category }}</p>
+<ul>{% for s in g.items %}<li>{{ s }}</li>{% endfor %}</ul>
+{% endfor %}
+{% endif %}
+
+{% if cv.education %}
+<h2 class="section">{{ L.education|upper }}</h2>
+<ul>
+{% for e in cv.education %}
+<li><strong>{{ e.degree }}</strong>{% if e.school %}<br/>{{ e.school }}{% endif %}{% if e.period %}<br/>{{ e.period }}{% endif %}</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% if cv.certifications %}
+<h2 class="section">{{ L.certs|upper }}</h2>
+<ul>{% for c in cv.certifications %}<li>{{ c }}</li>{% endfor %}</ul>
+{% endif %}
+
+{% if cv.languages %}
+<h2 class="section">{{ L.langs|upper }}</h2>
+<ul>{% for l in cv.languages %}<li>{{ l }}</li>{% endfor %}</ul>
+{% endif %}
+
+{% if cv.experiences %}
+<h2 class="section">{{ L.experience|upper }}</h2>
+{% for x in cv.experiences %}
+<div class="exp">
+  <p class="company">{{ x.company }}</p>
+  {% if x.role %}<p class="role">{{ x.role }}</p>{% endif %}
+  {% if x.period %}<p class="period">{{ x.period }}</p>{% endif %}
+  {% if x.context %}<p class="lbl">{{ L.context }}</p><p>{{ x.context }}</p>{% endif %}
+  {% if x.responsibilities %}
+  <p class="lbl">{{ L.responsibilities }}</p>
+  <ul>{% for r in x.responsibilities %}<li>{{ r }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if x.tech_environment %}
+  <p class="lbl">{{ L.tech }}</p>
+  <p class="tech">{{ x.tech_environment }}</p>
+  {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f6f8">
+<title>Connexion — CV Formatter</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<script>
+  (()=>{let savedTheme=null;try{savedTheme=localStorage.getItem('cvf-theme');}catch(_){}
+    document.documentElement.dataset.theme=savedTheme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');})();
+</script>
+<link rel="preload" href="/static/fonts/40fe3cf7.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/fonts/fonts.css">
+<style>
+  :root{
+    color-scheme:light;
+    --bg:#f5f6f8;--surface:#ffffff;--surface-soft:#f8f9fb;--ink:#111827;
+    --muted:#596273;--faint:#667085;--line:#e4e7ec;--line-strong:#9da6b5;
+    --accent:#5b5cf0;--accent-hover:#4949da;--accent-soft:#f0efff;--accent-line:#d9d7ff;
+    --ok:#15803d;--err:#d92d20;--err-soft:#fff1f0;
+    --shadow:0 16px 50px rgba(35,43,74,.08);
+    --sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --display:'Manrope',var(--sans);--radius:20px;
+  }
+  :root[data-theme="dark"]{
+    color-scheme:dark;--bg:#0d1017;--surface:#151923;--surface-soft:#1a1f2b;--ink:#f3f5f8;
+    --muted:#b3bbc8;--faint:#9ca6b7;--line:#2a303b;--line-strong:#657184;
+    --accent:#8b8cff;--accent-hover:#a4a5ff;--accent-soft:#222343;--accent-line:#3c3d70;
+    --err:#ff7168;--err-soft:#321a1c;--shadow:0 18px 60px rgba(0,0,0,.28);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;min-height:100vh;min-height:100dvh;font-family:var(--sans);color:var(--ink);background:var(--bg);
+    background-image:radial-gradient(circle at 50% -120px,rgba(91,92,240,.12),transparent 480px);
+    display:flex;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));
+    -webkit-font-smoothing:antialiased}
+  button,input{font:inherit}
+  a{color:inherit;text-decoration:none}
+  :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @keyframes riseIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .theme-toggle{position:fixed;top:20px;right:20px;width:38px;height:38px;border:1px solid var(--line);
+    border-radius:11px;background:var(--surface);color:var(--muted);display:grid;place-items:center;cursor:pointer;transition:.15s}
+  .theme-toggle:hover{color:var(--ink);border-color:var(--line-strong)}
+  .theme-toggle svg{width:17px;height:17px}.theme-toggle .moon{display:none}
+  :root[data-theme="dark"] .theme-toggle .sun{display:none}:root[data-theme="dark"] .theme-toggle .moon{display:block}
+
+  .wrap{width:100%;max-width:400px;animation:riseIn .3s ease both}
+  .brand{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:26px}
+  .logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,#6f70ff,#4647d7);
+    display:grid;place-items:center;color:#fff;
+    box-shadow:0 10px 28px rgba(91,92,240,.28)}
+  .logo svg{width:23px;height:23px}
+  .brand .nm{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-.02em;line-height:1.1}
+  .brand .sub{font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--faint);margin-top:3px;text-transform:uppercase}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:30px 28px;box-shadow:var(--shadow)}
+  .card h1{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-.02em;margin:0 0 4px;text-align:center}
+  .card .lead{color:var(--muted);font-size:13.5px;text-align:center;margin:0 0 22px;line-height:1.5}
+
+  label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.035em;margin:0 0 7px}
+  .field{margin-bottom:15px}
+  .inputwrap{display:flex;align-items:center;gap:10px;border:1px solid var(--line-strong);border-radius:12px;
+    padding:0 13px;background:var(--surface);transition:.15s}
+  .inputwrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 13%,transparent)}
+  .inputwrap svg{width:16px;height:16px;color:var(--faint);flex:none}
+  .inputwrap input{border:0;outline:0;background:transparent;padding:12px 0;font-size:14px;color:var(--ink);width:100%}
+  .inputwrap input::placeholder{color:var(--faint)}
+  .reveal{border:0;background:transparent;color:var(--faint);cursor:pointer;padding:4px;display:grid;place-items:center}
+  .reveal:hover{color:var(--muted)}.reveal svg{width:17px;height:17px}
+
+  .err{display:none;align-items:center;gap:8px;background:var(--err-soft);border:1px solid color-mix(in srgb,var(--err) 30%,transparent);
+    color:var(--err);border-radius:11px;padding:10px 12px;font-size:13px;font-weight:600;margin-bottom:16px}
+  .err.show{display:flex}.err svg{width:16px;height:16px;flex:none}
+
+  .btn{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:48px;border:1px solid transparent;
+    border-radius:12px;background:var(--accent);color:#fff;font-weight:700;font-size:14px;cursor:pointer;
+    box-shadow:0 10px 24px -14px var(--accent);transition:transform .15s,background .15s}
+  .btn:hover{background:var(--accent-hover);transform:translateY(-1px)}.btn:active{transform:none}
+  .btn:disabled{opacity:.6;cursor:wait}
+  .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;
+    animation:sp .7s linear infinite;display:none;flex:none}.btn.loading .spin{display:inline-block}
+
+  .alt{text-align:center;color:var(--muted);font-size:13px;margin-top:18px}
+  .alt a{color:var(--accent);font-weight:700}
+  .foot{text-align:center;color:var(--faint);font-size:12px;margin-top:16px;line-height:1.5}
+  @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle" type="button" aria-label="Changer de thème" title="Changer de thème">
+  <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
+  <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.2 15.3A8.8 8.8 0 0 1 8.7 3.8 8.9 8.9 0 1 0 20.2 15.3Z"/></svg>
+</button>
+
+<main class="wrap">
+  <div class="brand">
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6.5 3.5h7L18 8v12.5H6.5z"/><path d="M13.5 3.5V8H18M9 12h6M9 15h5"/></svg></div>
+    <div><div class="nm">CV&nbsp;Formatter</div><div class="sub">AI Studio</div></div>
+  </div>
+
+  <div class="card">
+    <h1>Connexion</h1>
+    <p class="lead">Accède au studio de mise en forme de CV.</p>
+
+    <div class="err {% if error %}show{% endif %}" id="err" role="alert">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5h.01"/></svg>
+      <span>{{ error or "" }}</span>
+    </div>
+
+    <form method="post" action="/login" id="loginForm" autocomplete="on">
+      <div class="field">
+        <label for="username">Identifiant</label>
+        <div class="inputwrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+          <input type="text" id="username" name="username" value="{{ username or '' }}" placeholder="admin" required autofocus autocomplete="username">
+        </div>
+      </div>
+      <div class="field">
+        <label for="password">Mot de passe</label>
+        <div class="inputwrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+          <button type="button" class="reveal" id="reveal" aria-label="Afficher le mot de passe" aria-pressed="false">
+            <svg id="eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <button class="btn" type="submit" id="btnLogin"><span class="spin"></span><span>Se connecter</span></button>
+    </form>
+
+    <p class="alt">Pas encore de compte ? <a href="/register">Créer un compte</a></p>
+  </div>
+
+  <p class="foot">Interface protégée · les appels API restent accessibles via <b>X-API-Key</b>.</p>
+</main>
+
+<script>
+  const $=(s)=>document.querySelector(s);
+  const themeToggle=$('#themeToggle');
+  function syncTheme(){const dark=document.documentElement.dataset.theme==='dark';
+    document.querySelector('meta[name="theme-color"]').content=dark?'#0d1017':'#f5f6f8';themeToggle.setAttribute('aria-label',dark?'Activer le thème clair':'Activer le thème sombre');}
+  themeToggle.onclick=()=>{const n=document.documentElement.dataset.theme==='dark'?'light':'dark';
+    document.documentElement.dataset.theme=n;try{localStorage.setItem('cvf-theme',n);}catch(_){}syncTheme();};
+  syncTheme();
+
+  const pw=$('#password'),eye=$('#eye');
+  $('#reveal').onclick=()=>{const show=pw.type==='password';pw.type=show?'text':'password';$('#reveal').setAttribute('aria-pressed',show?'true':'false');$('#reveal').setAttribute('aria-label',show?'Masquer le mot de passe':'Afficher le mot de passe');
+    eye.innerHTML=show
+      ?'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/>'
+      :'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';};
+
+  $('#loginForm').addEventListener('submit',()=>{$('#btnLogin').classList.add('loading');$('#btnLogin').disabled=true;});
+</script>
+</body>
+</html>
